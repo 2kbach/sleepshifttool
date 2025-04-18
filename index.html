@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sleep Shift Summary Generator</title>
+  <style>
+    :root {
+      --bg: #f9f9f9;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --accent: #007aff;
+      --radius: 12px;
+      --shadow: 0 10px 20px rgba(0,0,0,0.05);
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      background-color: var(--bg);
+      margin: 0;
+      padding: 20px;
+      color: var(--text);
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: var(--card);
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin: 12px 0 4px; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: var(--radius);
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      width: 100%;
+      font-size: 1rem;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    button:hover { background-color: #005bb5; }
+    #copyButton {
+      background-color: #34c759;
+      display: none;
+    }
+    #copyButton:hover { background-color: #28a745; }
+    pre {
+      background-color: #f0f0f0;
+      padding: 16px;
+      margin-top: 24px;
+      border-radius: var(--radius);
+      white-space: pre-wrap;
+      display: none;
+    }
+    #customTimingInput { display: none; }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Sleep Shift Summary Generator</h1>
+    <label>Initial Bedtime:</label>
+    <input type="time" id="initialBedtime" value="02:00" step="60">
+
+    <label>Sleep Duration (hours):</label>
+    <input type="number" step="0.1" id="sleepDuration" value="10">
+
+    <label>Shift Per Phase (hours):</label>
+    <input type="number" step="0.1" id="shiftMinutes" value="1.0">
+
+    <label>Days Per Phase:</label>
+    <input type="number" id="daysPerPhase" value="7">
+
+    <label>Number of Phases:</label>
+    <input type="number" id="numPhases" value="5">
+
+    <label>Melatonin Dosage (mg):</label>
+    <input type="number" id="melatoninDosage" value="3">
+
+    <label>Melatonin Timing:</label>
+    <select id="melatoninTiming" onchange="toggleCustomTiming(this.value)">
+      <option value="5">5 hours before bedtime (default)</option>
+      <option value="11mid">11 hours before mid-sleep</option>
+      <option value="custom">Custom (hours before bedtime)</option>
+    </select>
+
+    <input type="number" step="0.1" id="customTimingInput" placeholder="Enter hours before bedtime" />
+
+    <button onclick="generateSummary()">Generate Summary</button>
+    <pre id="output"></pre>
+    <button id="copyButton" onclick="copySummary()">Copy to Clipboard</button>
+  </div>
+
+  <footer style="text-align:center; margin-top: 40px; font-size: 0.9rem; color: #666;">
+    Built by Kevin Auerbach. <a href="mailto:2kbach@gmail.com">Email</a>
+  </footer>
+
+  <script>
+    function formatTime(date) {
+      let hrs = date.getHours();
+      let mins = date.getMinutes();
+      let suffix = hrs >= 12 ? "PM" : "AM";
+      hrs = ((hrs + 11) % 12 + 1);
+      return `${hrs}:${mins.toString().padStart(2, '0')} ${suffix}`;
+    }
+    function toggleCustomTiming(value) {
+      const input = document.getElementById("customTimingInput");
+      input.style.display = value === "custom" ? "block" : "none";
+    }
+    function generateSummary() {
+      const bedtimeInput = document.getElementById("initialBedtime").value;
+      const sleepDuration = parseFloat(document.getElementById("sleepDuration").value);
+      const shiftHours = parseFloat(document.getElementById("shiftMinutes").value);
+      const daysPerPhase = parseInt(document.getElementById("daysPerPhase").value);
+      const numPhases = parseInt(document.getElementById("numPhases").value);
+      const melatoninDosage = parseFloat(document.getElementById("melatoninDosage").value);
+      const melatoninTiming = document.getElementById("melatoninTiming").value;
+      const customHours = parseFloat(document.getElementById("customTimingInput").value);
+
+      const [hours, minutes] = bedtimeInput.split(":").map(Number);
+      let summary = "";
+
+      for (let phase = 0; phase < numPhases; phase++) {
+        const bedtime = new Date();
+        bedtime.setHours(hours);
+        bedtime.setMinutes(minutes);
+        bedtime.setSeconds(0);
+        bedtime.setMilliseconds(0);
+        bedtime.setTime(bedtime.getTime() - phase * shiftHours * 60 * 60 * 1000);
+
+        let melatoninTime;
+        if (melatoninTiming === "11mid") {
+          const wakeTime = new Date(bedtime.getTime() + sleepDuration * 60 * 60 * 1000);
+          const midSleep = new Date((bedtime.getTime() + wakeTime.getTime()) / 2);
+          melatoninTime = new Date(midSleep.getTime() - 11 * 60 * 60 * 1000);
+        } else if (melatoninTiming === "custom" && !isNaN(customHours)) {
+          melatoninTime = new Date(bedtime.getTime() - customHours * 60 * 60 * 1000);
+        } else {
+          melatoninTime = new Date(bedtime.getTime() - 5 * 60 * 60 * 1000);
+        }
+
+        const wakeTime = new Date(bedtime.getTime() + sleepDuration * 60 * 60 * 1000);
+
+        summary += `Phase ${phase + 1} (${daysPerPhase} days)\n`;
+        summary += `• Melatonin: ${melatoninDosage} mg at ${formatTime(melatoninTime)}\n`;
+        summary += `• Bedtime: ${formatTime(bedtime)}\n`;
+        summary += `• Wake up: ${formatTime(wakeTime)}\n\n`;
+      }
+
+      const output = document.getElementById("output");
+      output.textContent = summary.trim();
+      output.style.display = 'block';
+
+      const copyBtn = document.getElementById("copyButton");
+      copyBtn.style.display = 'block';
+    }
+
+    function copySummary() {
+      const output = document.getElementById("output").textContent;
+      navigator.clipboard.writeText(output).then(() => {
+        const btn = document.getElementById("copyButton");
+        const originalText = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = originalText, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
