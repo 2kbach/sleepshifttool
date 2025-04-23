@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sleep Shift Summary Generator</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
-  <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HZPFM4DRCS"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-HZPFM4DRCS');
-</script>
-   
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-HZPFM4DRCS"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-HZPFM4DRCS');
+  </script>
+
   <!-- Open Graph / Twitter SEO Tags -->
   <meta property="og:title" content="SleepShiftTool – Personalized Sleep Shift Planner">
   <meta property="og:description" content="A free tool to help you shift your sleep schedule using the science of circadian rhythms.">
@@ -69,11 +69,11 @@
       transition: background 0.2s ease;
     }
     button:hover { background-color: #005bb5; }
-    #copyButton {
+    #copyLinkBtn {
       background-color: #34c759;
       display: none;
     }
-    #copyButton:hover { background-color: #28a745; }
+    #copyLinkBtn:hover { background-color: #28a745; }
     pre {
       background-color: #f0f0f0;
       padding: 16px;
@@ -118,9 +118,9 @@
 
     <input type="number" step="0.1" id="customTimingInput" placeholder="Enter hours before bedtime" />
 
-    <button onclick="generateSummary()">Generate Summary</button>
+    <button id="generateBtn" onclick="generateSummary()">Generate Summary</button>
     <pre id="output"></pre>
-    <button id="copyButton" onclick="copySummary()">Copy to Clipboard</button>
+    <button id="copyLinkBtn" onclick="copySummary()">Copy to Clipboard</button>
   </div>
 
   <footer style="text-align:center; margin-top: 40px; font-size: 0.9rem; color: #666;">
@@ -149,7 +149,7 @@
       const melatoninTiming = document.getElementById("melatoninTiming").value;
       const customHours = parseFloat(document.getElementById("customTimingInput").value);
 
-      const [hours, minutes] = bedtimeInput.split(":").map(Number);
+      const [hours, minutes] = bedtimeInput.split(":" ).map(Number);
       let summary = "";
 
       for (let phase = 0; phase < numPhases; phase++) {
@@ -183,19 +183,57 @@
       output.textContent = summary.trim();
       output.style.display = 'block';
 
-      const copyBtn = document.getElementById("copyButton");
+      const copyBtn = document.getElementById("copyLinkBtn");
       copyBtn.style.display = 'block';
     }
 
     function copySummary() {
       const output = document.getElementById("output").textContent;
       navigator.clipboard.writeText(output).then(() => {
-        const btn = document.getElementById("copyButton");
+        const btn = document.getElementById("copyLinkBtn");
         const originalText = btn.textContent;
         btn.textContent = "Copied!";
         setTimeout(() => btn.textContent = originalText, 2000);
       });
     }
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const generateBtn = document.getElementById('generateBtn');
+      const copyLinkBtn = document.getElementById('copyLinkBtn');
+
+      const getVal = id => document.getElementById(id)?.value || 'not set';
+      const getText = id => document.getElementById(id)?.innerText || 'not set';
+
+      if (generateBtn) {
+        generateBtn.addEventListener('click', function () {
+          gtag('event', 'generate_clicked', {
+            event_category: 'interaction',
+            event_label: 'Generate Button',
+            sleep_start: getVal('initialBedtime'),
+            sleep_duration: getVal('sleepDuration'),
+            shift_per_phase: getVal('shiftMinutes'),
+            num_phases: getVal('numPhases'),
+            melatonin_time: getVal('melatoninTiming'),
+            melatonin_dosage: getVal('melatoninDosage'),
+            generated_output: getText('output'),
+            timestamp: new Date().toISOString(),
+          });
+        });
+      }
+
+      if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', function () {
+          gtag('event', 'copy_link_clicked', {
+            event_category: 'interaction',
+            event_label: 'Copy Link Button',
+            copied_text: getText('output'),
+            timestamp: new Date().toISOString(),
+          });
+        });
+      }
+    });
   </script>
 </body>
 </html>
