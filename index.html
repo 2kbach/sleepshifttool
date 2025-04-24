@@ -6,6 +6,7 @@
   <title>Sleep Shift Summary Generator</title>
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
   <link rel="canonical" href="https://sleepshifttool.com">
+  <meta name="description" content="A free web app that helps you follow a Sleep Phase Advancement Protocol to shift your sleep schedule earlier—ideal for treating Delayed Sleep-Wake Phase Disorder (DSWPD).">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HZPFM4DRCS"></script>
@@ -112,7 +113,8 @@
 
     <label>Melatonin Timing:</label>
     <select id="melatoninTiming" onchange="toggleCustomTiming(this.value)">
-      <option value="5">5 hours before bedtime (default)</option>
+      <option value="7">7 hours before bedtime (default)</option>
+      <option value="7.5">7.5 hours before bedtime</option>
       <option value="11mid">11 hours before mid-sleep</option>
       <option value="custom">Custom (hours before bedtime)</option>
     </select>
@@ -151,15 +153,23 @@
       const customHours = parseFloat(document.getElementById("customTimingInput").value);
 
       const [hours, minutes] = bedtimeInput.split(":" ).map(Number);
-      let summary = "";
 
-      for (let phase = 0; phase < numPhases; phase++) {
+      const currentBedtime = new Date();
+      currentBedtime.setHours(hours);
+      currentBedtime.setMinutes(minutes);
+      const currentWakeTime = new Date(currentBedtime.getTime() + sleepDuration * 60 * 60 * 1000);
+
+      let summary = "Current Sleep Schedule (For reference)\n";
+      summary += `• Bedtime: ${formatTime(currentBedtime)}\n`;
+      summary += `• Wake up: ${formatTime(currentWakeTime)}\n\n`;
+
+      for (let phase = 1; phase <= numPhases; phase++) {
         const bedtime = new Date();
         bedtime.setHours(hours);
         bedtime.setMinutes(minutes);
         bedtime.setSeconds(0);
         bedtime.setMilliseconds(0);
-        bedtime.setTime(bedtime.getTime() - phase * shiftHours * 60 * 60 * 1000);
+        bedtime.setTime(bedtime.getTime() - (phase - 1) * shiftHours * 60 * 60 * 1000);
 
         let melatoninTime;
         if (melatoninTiming === "11mid") {
@@ -169,12 +179,12 @@
         } else if (melatoninTiming === "custom" && !isNaN(customHours)) {
           melatoninTime = new Date(bedtime.getTime() - customHours * 60 * 60 * 1000);
         } else {
-          melatoninTime = new Date(bedtime.getTime() - 5 * 60 * 60 * 1000);
+          melatoninTime = new Date(bedtime.getTime() - parseFloat(melatoninTiming) * 60 * 60 * 1000);
         }
 
         const wakeTime = new Date(bedtime.getTime() + sleepDuration * 60 * 60 * 1000);
 
-        summary += `Phase ${phase + 1} (${daysPerPhase} days)\n`;
+        summary += `Phase ${phase} (${daysPerPhase} days)\n`;
         summary += `• Melatonin: ${melatoninDosage} mg at ${formatTime(melatoninTime)}\n`;
         summary += `• Bedtime: ${formatTime(bedtime)}\n`;
         summary += `• Wake up: ${formatTime(wakeTime)}\n\n`;
@@ -197,44 +207,6 @@
         setTimeout(() => btn.textContent = originalText, 2000);
       });
     }
-  </script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const generateBtn = document.getElementById('generateBtn');
-      const copyLinkBtn = document.getElementById('copyLinkBtn');
-
-      const getVal = id => document.getElementById(id)?.value || 'not set';
-      const getText = id => document.getElementById(id)?.innerText || 'not set';
-
-      if (generateBtn) {
-        generateBtn.addEventListener('click', function () {
-          gtag('event', 'generate_clicked', {
-            event_category: 'interaction',
-            event_label: 'Generate Button',
-            sleep_start: getVal('initialBedtime'),
-            sleep_duration: getVal('sleepDuration'),
-            shift_per_phase: getVal('shiftMinutes'),
-            num_phases: getVal('numPhases'),
-            melatonin_time: getVal('melatoninTiming'),
-            melatonin_dosage: getVal('melatoninDosage'),
-            generated_output: getText('output'),
-            timestamp: new Date().toISOString(),
-          });
-        });
-      }
-
-      if (copyLinkBtn) {
-        copyLinkBtn.addEventListener('click', function () {
-          gtag('event', 'copy_link_clicked', {
-            event_category: 'interaction',
-            event_label: 'Copy Link Button',
-            copied_text: getText('output'),
-            timestamp: new Date().toISOString(),
-          });
-        });
-      }
-    });
   </script>
 </body>
 </html>
