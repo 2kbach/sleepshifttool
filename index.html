@@ -32,6 +32,7 @@
       --accent: #007aff;
       --radius: 12px;
       --shadow: 0 10px 20px rgba(0,0,0,0.05);
+      --error: #ff3b30;
     }
     * { box-sizing: border-box; }
     body {
@@ -120,6 +121,10 @@
     </select>
 
     <input type="number" step="0.1" id="customTimingInput" placeholder="Enter hours before bedtime" />
+
+    <p style="text-align:center; margin-top: 24px; font-size: 0.75rem; color: #888;">
+      This tool is for educational purposes only and is not a substitute for professional medical advice. Always consult your doctor before making any changes to your sleep schedule or health routines.
+    </p>
 
     <button id="generateBtn" onclick="generateSummary()">Generate Summary</button>
     <pre id="output"></pre>
